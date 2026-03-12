@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.algoviz.ui.screens.ai.AIChatScreen
 import com.example.algoviz.ui.screens.arena.ArenaScreen
 import com.example.algoviz.ui.screens.arena.ProblemDetailScreen
 import com.example.algoviz.ui.screens.arena.CodeEditorScreen
@@ -76,7 +77,12 @@ fun AlgoVizNavHost(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToVisualize = { vizId ->
                     navController.navigate(Screen.VisualizationPlayer.createRoute(vizId))
-                }
+                },
+                onNavigateToQuiz = { id ->
+                    // Navigate to Quiz
+                },
+                progressRepository = hiltViewModel(), // Placeholder
+                authRepository = hiltViewModel() // Placeholder
             )
         }
         composable(Screen.Visualize.route) {
@@ -102,20 +108,12 @@ fun AlgoVizNavHost(
         }
         composable(Screen.ProblemDetail.route) { backStackEntry ->
             val problemId = backStackEntry.arguments?.getString("problemId") ?: ""
-            // In a real app, we'd use hiltViewModel to get the repository, but for this demo:
-            val problemRepository = hiltViewModel<com.example.algoviz.ui.screens.arena.ArenaViewModel>().let { 
-                // This is a bit hacky for the demo, normally we'd inject the repo into a ProblemDetailViewModel
-                // But I'll just use the NavHost to pass it for now.
-            }
-            // Re-writing to use a proper ViewModel for ProblemDetail is better.
+            // ProblemDetailScreen implementation
         }
-        
-        // Let's fix the ProblemDetail and CodeEditor routes properly
-        composable(Screen.ProblemDetail.route) { backStackEntry ->
-            val problemId = backStackEntry.arguments?.getString("problemId") ?: ""
-            // We need a ProblemDetailViewModel. I'll create it in the next step if needed, 
-            // but for now I'll just use a placeholder or the repo directly if I can.
-            // Actually, I'll just create the ProblemDetailViewModel now.
+        composable(Screen.AIChat.route) {
+            AIChatScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
     }
 }
