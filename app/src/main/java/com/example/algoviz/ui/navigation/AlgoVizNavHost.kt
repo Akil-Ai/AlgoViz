@@ -5,6 +5,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.algoviz.ui.screens.arena.ArenaScreen
+import com.example.algoviz.ui.screens.arena.ProblemDetailScreen
+import com.example.algoviz.ui.screens.arena.CodeEditorScreen
 import com.example.algoviz.ui.screens.auth.LoginScreen
 import com.example.algoviz.ui.screens.auth.SignupScreen
 import com.example.algoviz.ui.screens.home.HomeScreen
@@ -13,6 +15,9 @@ import com.example.algoviz.ui.screens.learn.LearnDetailScreen
 import com.example.algoviz.ui.screens.profile.ProfileScreen
 import com.example.algoviz.ui.screens.visualize.VisualizeScreen
 import com.example.algoviz.ui.screens.visualize.VisualizationPlayerScreen
+import com.example.algoviz.domain.repository.ProblemRepository
+import androidx.hilt.navigation.compose.hiltViewModel
+import javax.inject.Inject
 
 @Composable
 fun AlgoVizNavHost(
@@ -95,17 +100,22 @@ fun AlgoVizNavHost(
                 }
             )
         }
-        composable(Screen.Profile.route) {
-            ProfileScreen(
-                onNavigateToSettings = {
-                    navController.navigate(Screen.Settings.route)
-                },
-                onLogoutSuccess = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(navController.graph.id) { inclusive = true }
-                    }
-                }
-            )
+        composable(Screen.ProblemDetail.route) { backStackEntry ->
+            val problemId = backStackEntry.arguments?.getString("problemId") ?: ""
+            // In a real app, we'd use hiltViewModel to get the repository, but for this demo:
+            val problemRepository = hiltViewModel<com.example.algoviz.ui.screens.arena.ArenaViewModel>().let { 
+                // This is a bit hacky for the demo, normally we'd inject the repo into a ProblemDetailViewModel
+                // But I'll just use the NavHost to pass it for now.
+            }
+            // Re-writing to use a proper ViewModel for ProblemDetail is better.
+        }
+        
+        // Let's fix the ProblemDetail and CodeEditor routes properly
+        composable(Screen.ProblemDetail.route) { backStackEntry ->
+            val problemId = backStackEntry.arguments?.getString("problemId") ?: ""
+            // We need a ProblemDetailViewModel. I'll create it in the next step if needed, 
+            // but for now I'll just use a placeholder or the repo directly if I can.
+            // Actually, I'll just create the ProblemDetailViewModel now.
         }
     }
 }
