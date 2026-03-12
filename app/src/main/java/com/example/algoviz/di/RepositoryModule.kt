@@ -2,11 +2,13 @@ package com.example.algoviz.di
 
 import com.example.algoviz.data.repository.AuthRepositoryImpl
 import com.example.algoviz.data.repository.ProblemRepositoryImpl
+import com.example.algoviz.data.repository.ProgressRepositoryImpl
 import com.example.algoviz.data.repository.SubmissionRepositoryImpl
 import com.example.algoviz.data.repository.TopicRepositoryImpl
 import com.example.algoviz.data.repository.UserRepositoryImpl
 import com.example.algoviz.domain.repository.AuthRepository
 import com.example.algoviz.domain.repository.ProblemRepository
+import com.example.algoviz.domain.repository.ProgressRepository
 import com.example.algoviz.domain.repository.SubmissionRepository
 import com.example.algoviz.domain.repository.TopicRepository
 import com.example.algoviz.domain.repository.UserRepository
@@ -39,4 +41,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindSubmissionRepository(impl: SubmissionRepositoryImpl): SubmissionRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindProgressRepository(impl: ProgressRepositoryImpl): ProgressRepository
 }

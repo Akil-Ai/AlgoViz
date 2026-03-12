@@ -8,16 +8,21 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.algoviz.domain.engine.AlgorithmDataProvider
+import com.example.algoviz.domain.repository.AuthRepository
+import com.example.algoviz.domain.repository.ProgressRepository
 import com.example.algoviz.ui.theme.DeepNavy
 import com.example.algoviz.ui.theme.MintAccent
 import com.example.algoviz.ui.theme.OrangeAccent
@@ -30,10 +35,20 @@ import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTube
 fun LearnDetailScreen(
     topicId: String,
     onNavigateBack: () -> Unit,
-    onNavigateToVisualize: (String) -> Unit
+    onNavigateToVisualize: (String) -> Unit,
+    onNavigateToQuiz: (String) -> Unit,
+    progressRepository: ProgressRepository, // Injected via NavHost for now
+    authRepository: AuthRepository
 ) {
     val algorithmInfo = remember(topicId) { AlgorithmDataProvider.algorithmInfoMap[topicId] }
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    LaunchedEffect(topicId) {
+        val userId = authRepository.getCurrentUser()?.id ?: ""
+        if (userId.isNotEmpty()) {
+            progressRepository.markLessonCompleted(userId, topicId)
+        }
+    }
 
     if (algorithmInfo == null) {
         Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
@@ -55,13 +70,23 @@ fun LearnDetailScreen(
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = { onNavigateToVisualize(topicId) },
-                containerColor = MintAccent,
-                contentColor = DeepNavy,
-                icon = { Icon(Icons.Filled.PlayArrow, contentDescription = "Visualize") },
-                text = { Text("Open Visualizer", fontWeight = FontWeight.Bold) }
-            )
+            Column(horizontalAlignment = Alignment.End) {
+                SmallFloatingActionButton(
+                    onClick = { onNavigateToQuiz(topicId) },
+                    containerColor = OrangeAccent,
+                    contentColor = Color.White
+                ) {
+                    Icon(Icons.Filled.Quiz, contentDescription = "Take Quiz")
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                ExtendedFloatingActionButton(
+                    onClick = { onNavigateToVisualize(topicId) },
+                    containerColor = MintAccent,
+                    contentColor = DeepNavy,
+                    icon = { Icon(Icons.Filled.PlayArrow, contentDescription = "Visualize") },
+                    text = { Text("Open Visualizer", fontWeight = FontWeight.Bold) }
+                )
+            }
         }
     ) { innerPadding ->
         Column(
@@ -170,7 +195,7 @@ fun LearnDetailScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Spacer(modifier = Modifier.height(80.dp)) // padding for FAB
+                Spacer(modifier = Modifier.height(120.dp)) // padding for FABs
             }
         }
     }
