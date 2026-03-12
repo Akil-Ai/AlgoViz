@@ -4,6 +4,9 @@ import com.example.algoviz.domain.model.User
 import com.example.algoviz.domain.repository.UserRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.Serializable
 import javax.inject.Inject
 
@@ -21,6 +24,13 @@ class UserRepositoryImpl @Inject constructor(
             Result.success(result.toDomain())
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    override fun getUserProfileFlow(userId: String): Flow<Result<User>> = flow {
+        while (true) {
+            emit(getUserProfile(userId))
+            delay(5000) // Poll every 5 seconds to simulate realtime
         }
     }
 

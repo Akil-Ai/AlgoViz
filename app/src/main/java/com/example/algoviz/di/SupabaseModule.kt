@@ -24,7 +24,10 @@ object SupabaseModule {
             supabaseUrl = Constants.SUPABASE_URL,
             supabaseKey = Constants.SUPABASE_ANON_KEY,
         ) {
-            install(Auth)
+            install(Auth) {
+                scheme = "algoviz"
+                host = "login-callback"
+            }
             install(Postgrest)
             install(Realtime)
             install(Storage)

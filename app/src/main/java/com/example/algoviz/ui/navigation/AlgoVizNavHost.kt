@@ -9,6 +9,7 @@ import com.example.algoviz.ui.screens.auth.LoginScreen
 import com.example.algoviz.ui.screens.auth.SignupScreen
 import com.example.algoviz.ui.screens.home.HomeScreen
 import com.example.algoviz.ui.screens.learn.LearnScreen
+import com.example.algoviz.ui.screens.learn.LearnDetailScreen
 import com.example.algoviz.ui.screens.profile.ProfileScreen
 import com.example.algoviz.ui.screens.visualize.VisualizeScreen
 import com.example.algoviz.ui.screens.visualize.VisualizationPlayerScreen
@@ -63,6 +64,16 @@ fun AlgoVizNavHost(
                 }
             )
         }
+        composable(Screen.TopicDetail.route) { backStackEntry ->
+            val topicId = backStackEntry.arguments?.getString("topicId") ?: ""
+            LearnDetailScreen(
+                topicId = topicId,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToVisualize = { vizId ->
+                    navController.navigate(Screen.VisualizationPlayer.createRoute(vizId))
+                }
+            )
+        }
         composable(Screen.Visualize.route) {
             VisualizeScreen(
                 onNavigateToVisualization = { vizId ->
@@ -88,6 +99,11 @@ fun AlgoVizNavHost(
             ProfileScreen(
                 onNavigateToSettings = {
                     navController.navigate(Screen.Settings.route)
+                },
+                onLogoutSuccess = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(navController.graph.id) { inclusive = true }
+                    }
                 }
             )
         }

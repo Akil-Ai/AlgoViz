@@ -278,6 +278,51 @@ fun SignupScreen(
                 }
             }
 
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Divider
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(1.dp)
+                        .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)),
+                )
+                Text(
+                    text = "  or  ",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(1.dp)
+                        .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)),
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Google Sign In
+            androidx.compose.material3.OutlinedButton(
+                onClick = {
+                    viewModel.signInWithGoogle()
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(14.dp),
+            ) {
+                Text(
+                    text = "Sign Up with Google",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
 
             // Login link

@@ -26,14 +26,21 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,9 +49,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.algoviz.domain.engine.VisualizationState
 import com.example.algoviz.ui.screens.visualize.components.ArrayCanvas
+import com.example.algoviz.ui.screens.visualize.components.GraphCanvas
+import com.example.algoviz.ui.screens.visualize.components.TreeCanvas
 import com.example.algoviz.ui.theme.DeepNavy
 import com.example.algoviz.ui.theme.MintAccent
+import com.example.algoviz.ui.theme.OrangeAccent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,6 +65,11 @@ fun VisualizationPlayerScreen(
     viewModel: VisualizationViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var showInfoSheet by remember { mutableStateOf(false) }
+
+    LaunchedEffect(vizId) {
+        viewModel.initialize(vizId)
+    }
 
     Scaffold(
         topBar = {
@@ -71,11 +87,11 @@ fun VisualizationPlayerScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { /* TODO: Trigger AI Voice Explanation */ },
+                onClick = { showInfoSheet = true },
                 containerColor = DeepNavy,
                 contentColor = MintAccent
             ) {
-                Icon(Icons.Filled.Info, contentDescription = "AI Explain")
+                Icon(Icons.Filled.Info, contentDescription = "Algorithm Info")
             }
         }
     ) { innerPadding ->
@@ -95,10 +111,29 @@ fun VisualizationPlayerScreen(
                     .padding(16.dp),
                 contentAlignment = Alignment.Center
             ) {
-                ArrayCanvas(
-                    step = uiState.currentStep,
-                    modifier = Modifier.fillMaxSize()
-                )
+                when (val state = uiState.currentStep?.state) {
+                    is VisualizationState.ArrayState -> {
+                        ArrayCanvas(
+                            step = uiState.currentStep,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                    is VisualizationState.GraphState -> {
+                        GraphCanvas(
+                            step = uiState.currentStep,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                    is VisualizationState.TreeState -> {
+                        TreeCanvas(
+                            step = uiState.currentStep,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                    null -> {
+                        Text("Loading Algorithm...", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
             }
 
             // Explanation Card
@@ -194,6 +229,78 @@ fun VisualizationPlayerScreen(
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+        }
+    }
+
+    if (showInfoSheet && uiState.algorithmInfo != null) {
+        val info = uiState.algorithmInfo!!
+        ModalBottomSheet(
+            onDismissRequest = { showInfoSheet = false },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            containerColor = MaterialTheme.colorScheme.surface
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 16.dp)
+            ) {
+                Text(
+                    text = info.title,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MintAccent
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Text(text = "Overview", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(text = info.description, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp, bottom = 12.dp))
+                
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Surface(
+                        color = DeepNavy.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.weight(1f).padding(end = 8.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text(text = "Time", style = MaterialTheme.typography.labelSmall, color = MintAccent)
+                            Text(text = info.timeComplexity, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+                        }
+                    }
+                    Surface(
+                        color = DeepNavy.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.weight(1f).padding(start = 8.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text(text = "Space", style = MaterialTheme.typography.labelSmall, color = OrangeAccent)
+                            Text(text = info.spaceComplexity, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Text(text = "Algorithm Steps", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                info.steps.forEachIndexed { index, step ->
+                    Row(modifier = Modifier.padding(top = 8.dp)) {
+                        Text(
+                            text = "${index + 1}.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MintAccent,
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
+                        Text(text = step, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Text(text = "Use Cases", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(text = info.useCases, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
+                
+                Spacer(modifier = Modifier.height(32.dp))
             }
         }
     }

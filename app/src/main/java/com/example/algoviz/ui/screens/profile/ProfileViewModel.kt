@@ -39,11 +39,12 @@ class ProfileViewModel @Inject constructor(
             try {
                 val currentUser = authRepository.getCurrentUser()
                 if (currentUser != null) {
-                    val profileResult = userRepository.getUserProfile(currentUser.id)
-                    profileResult.onSuccess { userProfile ->
-                        _uiState.update { ProfileUiState.Success(userProfile) }
-                    }.onFailure { exception ->
-                        _uiState.update { ProfileUiState.Error(exception.message ?: "Failed to load profile") }
+                    userRepository.getUserProfileFlow(currentUser.id).collect { profileResult ->
+                        profileResult.onSuccess { userProfile ->
+                            _uiState.update { ProfileUiState.Success(userProfile) }
+                        }.onFailure { exception ->
+                            _uiState.update { ProfileUiState.Error(exception.message ?: "Failed to load profile") }
+                        }
                     }
                 } else {
                     _uiState.update { ProfileUiState.Error("User not logged in") }
@@ -51,6 +52,12 @@ class ProfileViewModel @Inject constructor(
             } catch (e: Exception) {
                 _uiState.update { ProfileUiState.Error(e.message ?: "Unknown error occurred") }
             }
+        }
+    }
+
+    fun signOut() {
+        viewModelScope.launch {
+            authRepository.signOut()
         }
     }
 }

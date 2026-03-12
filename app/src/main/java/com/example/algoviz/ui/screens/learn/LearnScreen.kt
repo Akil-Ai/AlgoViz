@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.DataArray
 import androidx.compose.material.icons.filled.Hub
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -52,11 +53,11 @@ import com.example.algoviz.ui.theme.InfoBlue
 import com.example.algoviz.ui.theme.MintAccent
 import com.example.algoviz.ui.theme.OrangeAccent
 
-data class TopicCategory(
+data class AlgorithmCategory(
     val name: String,
     val icon: ImageVector,
-    val topicCount: Int,
     val color: androidx.compose.ui.graphics.Color,
+    val algorithms: List<String> // List of topicIds (e.g. "bubble_sort", "bfs")
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -66,15 +67,34 @@ fun LearnScreen(
 ) {
     val categories = remember {
         listOf(
-            TopicCategory("Linear DS", Icons.Filled.DataArray, 8, MintAccent),
-            TopicCategory("Trees", Icons.Filled.AccountTree, 10, OrangeAccent),
-            TopicCategory("Graphs", Icons.Filled.Hub, 12, InfoBlue),
-            TopicCategory("Sorting", Icons.Filled.Analytics, 10, OrangeAccent),
-            TopicCategory("DP", Icons.Filled.Code, 10, MintAccent),
+            AlgorithmCategory(
+                name = "Sorting Algorithms", 
+                icon = Icons.Filled.Analytics, 
+                color = OrangeAccent,
+                algorithms = listOf("bubble_sort", "merge_sort", "quick_sort", "heap_sort")
+            ),
+            AlgorithmCategory(
+                name = "Searching Algorithms", 
+                icon = Icons.Filled.Search, 
+                color = MintAccent,
+                algorithms = listOf("binary_search", "linear_search")
+            ),
+            AlgorithmCategory(
+                name = "Graph Algorithms", 
+                icon = Icons.Filled.Hub, 
+                color = InfoBlue,
+                algorithms = listOf("bfs", "dfs", "dijkstra")
+            ),
+            AlgorithmCategory(
+                name = "Tree Algorithms", 
+                icon = Icons.Filled.AccountTree, 
+                color = OrangeAccent,
+                algorithms = listOf("bst_insert")
+            )
         )
     }
 
-    val tracks = listOf("All", "Beginner", "Interview", "Competitive", "Advanced")
+    val tracks = listOf("All", "Beginner", "Intermediate", "Advanced")
     var selectedTrack by remember { mutableStateOf("All") }
 
     Column(
@@ -138,7 +158,7 @@ fun LearnScreen(
             }
 
             items(categories) { category ->
-                CategoryCard(category = category, onClick = {})
+                CategoryBlock(category = category, onNavigateToTopic = onNavigateToTopic)
             }
 
             // Bottom spacer
@@ -148,26 +168,19 @@ fun LearnScreen(
 }
 
 @Composable
-private fun CategoryCard(
-    category: TopicCategory,
-    onClick: () -> Unit,
+private fun CategoryBlock(
+    category: AlgorithmCategory,
+    onNavigateToTopic: (String) -> Unit,
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        ),
-    ) {
+    Column(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+        // Category Header
         Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(bottom = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(40.dp)
                     .clip(CircleShape)
                     .background(category.color.copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center,
@@ -176,23 +189,71 @@ private fun CategoryCard(
                     imageVector = category.icon,
                     contentDescription = category.name,
                     tint = category.color,
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier.size(20.dp),
                 )
             }
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = category.name,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+
+        // Algorithm Cards
+        category.algorithms.forEach { algoId ->
+            val info = com.example.algoviz.domain.engine.AlgorithmDataProvider.algorithmInfoMap[algoId]
+            if (info != null) {
+                AlgorithmCard(
+                    title = info.title,
+                    description = info.timeComplexity,
+                    onClick = { onNavigateToTopic(algoId) }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun AlgorithmCard(
+    title: String,
+    description: String,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+        ),
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = category.name,
-                    style = MaterialTheme.typography.titleMedium,
+                    text = title,
+                    style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
-                    text = "${category.topicCount} topics",
+                    text = "Time: $description",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            Icon(
+                imageVector = Icons.Filled.PlayArrow,
+                contentDescription = "Learn",
+                tint = MintAccent
+            )
         }
     }
 }

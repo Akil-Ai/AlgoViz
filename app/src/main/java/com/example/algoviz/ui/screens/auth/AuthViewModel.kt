@@ -26,6 +26,21 @@ class AuthViewModel @Inject constructor(
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
 
+    init {
+        viewModelScope.launch {
+            authRepository.sessionStatus.collect { isAuthenticated ->
+                if (isAuthenticated) {
+                    val user = authRepository.getCurrentUser()
+                    if (user != null) {
+                        _authState.value = AuthState.Authenticated(user)
+                    }
+                } else if (_authState.value !is AuthState.Loading) {
+                    _authState.value = AuthState.Idle
+                }
+            }
+        }
+    }
+
     fun resetState() {
         _authState.value = AuthState.Idle
     }
@@ -51,6 +66,16 @@ class AuthViewModel @Inject constructor(
                 _authState.value = AuthState.Authenticated(user)
             }.onFailure { e ->
                 _authState.value = AuthState.Error(e.message ?: "Login failed")
+            }
+        }
+    }
+
+    fun signInWithGoogle() {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            val result = authRepository.signInWithGoogle()
+            result.onFailure { e ->
+                _authState.value = AuthState.Error(e.message ?: "Google Sign-In failed")
             }
         }
     }

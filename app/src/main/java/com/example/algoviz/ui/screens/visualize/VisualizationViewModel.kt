@@ -2,9 +2,21 @@ package com.example.algoviz.ui.screens.visualize
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.algoviz.domain.engine.AlgorithmDataProvider
+import com.example.algoviz.domain.engine.AlgorithmInfo
 import com.example.algoviz.domain.engine.AlgorithmVisualizer
-import com.example.algoviz.domain.engine.ArrayStep
+import com.example.algoviz.domain.engine.VisualizationStep
+import com.example.algoviz.domain.engine.algorithms.BFSVisualizer
+import com.example.algoviz.domain.engine.algorithms.BSTInsertVisualizer
+import com.example.algoviz.domain.engine.algorithms.BinarySearchVisualizer
 import com.example.algoviz.domain.engine.algorithms.BubbleSortVisualizer
+import com.example.algoviz.domain.engine.algorithms.DFSVisualizer
+import com.example.algoviz.domain.engine.algorithms.DijkstraEdge
+import com.example.algoviz.domain.engine.algorithms.DijkstraVisualizer
+import com.example.algoviz.domain.engine.algorithms.HeapSortVisualizer
+import com.example.algoviz.domain.engine.algorithms.LinearSearchVisualizer
+import com.example.algoviz.domain.engine.algorithms.MergeSortVisualizer
+import com.example.algoviz.domain.engine.algorithms.QuickSortVisualizer
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,14 +26,15 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class VisualizationState(
-    val steps: List<ArrayStep> = emptyList(),
+    val steps: List<VisualizationStep> = emptyList(),
     val currentStepIndex: Int = 0,
     val isPlaying: Boolean = false,
     val playbackSpeed: Float = 1.0f, // 0.25x to 4.0x
     val title: String = "",
-    val isComplete: Boolean = false
+    val isComplete: Boolean = false,
+    val algorithmInfo: AlgorithmInfo? = null
 ) {
-    val currentStep: ArrayStep?
+    val currentStep: VisualizationStep?
         get() = steps.getOrNull(currentStepIndex)
 }
 
@@ -33,29 +46,67 @@ class VisualizationViewModel : ViewModel() {
     private var playbackJob: Job? = null
     private val baseDelayMs = 800L
 
-    init {
-        // For MVP, we'll initialize with Bubble Sort directly
-        // In a full implementation, we'd pass the algoId and use a Factory to get the Visualizer
-        loadAlgorithm("bubble_sort")
+    private var isInitialized = false
+
+    fun initialize(algoId: String) {
+        if (isInitialized) return
+        isInitialized = true
+        loadAlgorithm(algoId)
     }
 
     private fun loadAlgorithm(algoId: String) {
-        val visualizer: AlgorithmVisualizer = when (algoId) {
-            "bubble_sort" -> BubbleSortVisualizer()
-            else -> BubbleSortVisualizer() // Default fallback
+        val (visualizer, initialData, title) = when (algoId) {
+            "bfs" -> {
+                val graphData = mapOf(1 to listOf(2, 3), 2 to listOf(1, 4, 5), 3 to listOf(1, 6), 4 to listOf(2), 5 to listOf(2, 6), 6 to listOf(3, 5))
+                Triple(BFSVisualizer(), graphData, "Breadth-First Search")
+            }
+            "dfs" -> {
+                val graphData = mapOf(1 to listOf(2, 3), 2 to listOf(1, 4, 5), 3 to listOf(1, 6), 4 to listOf(2), 5 to listOf(2, 6), 6 to listOf(3, 5))
+                Triple(DFSVisualizer(), graphData, "Depth-First Search")
+            }
+            "dijkstra" -> {
+                val graphData = mapOf(
+                    1 to listOf(DijkstraEdge(2, 4), DijkstraEdge(3, 1)),
+                    2 to listOf(DijkstraEdge(1, 4), DijkstraEdge(4, 2), DijkstraEdge(5, 5)),
+                    3 to listOf(DijkstraEdge(1, 1), DijkstraEdge(6, 6)),
+                    4 to listOf(DijkstraEdge(2, 2)),
+                    5 to listOf(DijkstraEdge(2, 5), DijkstraEdge(6, 3)),
+                    6 to listOf(DijkstraEdge(3, 6), DijkstraEdge(5, 3))
+                )
+                Triple(DijkstraVisualizer(), graphData, "Dijkstra's Shortest Path")
+            }
+            "bst_insert" -> {
+                val dataToInsert = listOf(50, 30, 20, 40, 70, 60, 80)
+                Triple(BSTInsertVisualizer(), dataToInsert, "BST Insert")
+            }
+            "bubble_sort" -> Triple(BubbleSortVisualizer(), List(10) { (10..99).random() }, "Bubble Sort")
+            "merge_sort" -> Triple(MergeSortVisualizer(), List(10) { (10..99).random() }, "Merge Sort")
+            "quick_sort" -> Triple(QuickSortVisualizer(), List(10) { (10..99).random() }, "Quick Sort")
+            "heap_sort" -> Triple(HeapSortVisualizer(), List(10) { (10..99).random() }, "Heap Sort")
+            "binary_search" -> {
+                val sortedArray = List(10) { (10..99).random() }.sorted()
+                val target = sortedArray.random()
+                Triple(BinarySearchVisualizer(), Pair(sortedArray, target), "Binary Search")
+            }
+            "linear_search" -> {
+                val unsortedArray = List(10) { (10..99).random() }
+                val target = unsortedArray.random()
+                Triple(LinearSearchVisualizer(), Pair(unsortedArray, target), "Linear Search")
+            }
+            else -> Triple(BubbleSortVisualizer(), List(10) { (10..99).random() }, "Bubble Sort (Fallback)")
         }
 
-        // Generate a random array of 10 elements for demonstration
-        val initialArray = List(10) { (10..99).random() }
-        val generatedSteps = visualizer.visualize(initialArray)
+        val generatedSteps = visualizer.visualize(initialData)
+        val info = AlgorithmDataProvider.algorithmInfoMap[algoId]
 
         _uiState.update { 
             it.copy(
                 steps = generatedSteps,
                 currentStepIndex = 0,
                 isPlaying = false,
-                title = "Bubble Sort",
-                isComplete = false
+                title = title,
+                isComplete = false,
+                algorithmInfo = info
             )
         }
     }

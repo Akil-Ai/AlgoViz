@@ -1,28 +1,22 @@
 package com.example.algoviz.domain.engine
 
 /**
- * Represents a single discrete step in an array-based algorithm visualization.
+ * Represents a single discrete step in an algorithm visualization.
  * 
- * @property array The current state of the array at this step.
- * @property comparingIndices The indices currently being compared (highlighted).
- * @property swapped Whether the elements at comparingIndices were just swapped.
- * @property sortedIndices The set of indices that are in their final sorted position.
+ * @property state The structural state of the data (Array, Graph, Tree).
  * @property explanation A human-readable plain text explanation of what is happening in this step.
  */
-data class ArrayStep(
-    val array: List<Int>,
-    val comparingIndices: List<Int> = emptyList(),
-    val swapped: Boolean = false,
-    val sortedIndices: Set<Int> = emptySet(),
+data class VisualizationStep(
+    val state: VisualizationState,
     val explanation: String = ""
 )
 
 /**
- * Interface for all array-based algorithm visualizers.
+ * Interface for all algorithm visualizers.
  */
 interface AlgorithmVisualizer {
     /**
-     * Given an initial unsorted array, generates a sequence of steps mapping the algorithm's execution.
+     * Generates a sequence of steps mapping the algorithm's execution based on an initial state.
      */
-    fun visualize(initialArray: List<Int>): List<ArrayStep>
+    fun visualize(initialData: Any): List<VisualizationStep>
 }

@@ -4,8 +4,12 @@ import com.example.algoviz.domain.model.User
 import com.example.algoviz.domain.repository.AuthRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.providers.Google
 import io.github.jan.supabase.auth.providers.builtin.Email
+import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.postgrest.postgrest
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import javax.inject.Inject
@@ -13,6 +17,19 @@ import javax.inject.Inject
 class AuthRepositoryImpl @Inject constructor(
     private val supabaseClient: SupabaseClient,
 ) : AuthRepository {
+
+    override val sessionStatus: Flow<Boolean> = supabaseClient.auth.sessionStatus.map {
+        it is SessionStatus.Authenticated
+    }
+
+    override suspend fun signInWithGoogle(): Result<Unit> {
+        return try {
+            supabaseClient.auth.signInWith(Google)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
     override suspend fun signIn(email: String, password: String): Result<User> {
         return try {

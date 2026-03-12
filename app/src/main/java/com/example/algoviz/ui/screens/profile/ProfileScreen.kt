@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -45,14 +46,18 @@ import com.example.algoviz.ui.theme.OrangeAccent
 import com.example.algoviz.ui.theme.StreakFlame
 import com.example.algoviz.ui.theme.TierNovice
 import com.example.algoviz.ui.theme.XPGold
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.algoviz.domain.model.User
+import androidx.compose.animation.core.*
+import androidx.compose.ui.draw.scale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     onNavigateToSettings: () -> Unit = {},
+    onLogoutSuccess: () -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -126,6 +131,40 @@ fun ProfileScreen(
                             AchievementsSection()
                         }
 
+                        // Logout Button
+                        item {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            androidx.compose.material3.OutlinedButton(
+                                onClick = { 
+                                    viewModel.signOut() 
+                                    onLogoutSuccess()
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(52.dp),
+                                shape = RoundedCornerShape(14.dp),
+                                colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.error
+                                ),
+                                border = androidx.compose.foundation.BorderStroke(
+                                    1.dp,
+                                    MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
+                                )
+                            ) {
+                                Icon(
+                                    androidx.compose.material.icons.Icons.AutoMirrored.Filled.Logout,
+                                    contentDescription = "Logout",
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Log Out",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Medium,
+                                )
+                            }
+                        }
+
                         item { Spacer(modifier = Modifier.height(80.dp)) }
                     }
                 }
@@ -170,12 +209,25 @@ private fun ProfileHeader(user: User) {
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            val infiniteTransition = rememberInfiniteTransition(label = "badge_anim")
+            val badgeScale by infiniteTransition.animateFloat(
+                initialValue = 0.97f,
+                targetValue = 1.05f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(1500, easing = FastOutSlowInEasing),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "badge_scale"
+            )
+
             Box(
                 modifier = Modifier
+                    .scale(badgeScale)
                     .clip(RoundedCornerShape(8.dp))
                     .background(TierNovice.copy(alpha = 0.15f))
-                    .padding(horizontal = 12.dp, vertical = 4.dp),
+                    .padding(horizontal = 14.dp, vertical = 6.dp),
             ) {
                 Text(
                     text = "⭐ ${user.tier.replaceFirstChar { it.uppercase() }}",

@@ -18,18 +18,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.algoviz.domain.engine.ArrayStep
+import com.example.algoviz.domain.engine.VisualizationState
+import com.example.algoviz.domain.engine.VisualizationStep
 import com.example.algoviz.ui.theme.InfoBlue
 import com.example.algoviz.ui.theme.MintAccent
 import com.example.algoviz.ui.theme.OrangeAccent
+import com.example.algoviz.ui.theme.DeepNavy
 import kotlin.math.max
 
 @Composable
 fun ArrayCanvas(
-    step: ArrayStep?,
+    step: VisualizationStep?,
     modifier: Modifier = Modifier,
 ) {
-    if (step == null) return
+    if (step == null || step.state !is VisualizationState.ArrayState) return
+    
+    val arrayState = step.state as VisualizationState.ArrayState
 
     val textMeasurer = rememberTextMeasurer()
     val onSurface = MaterialTheme.colorScheme.onSurface
@@ -38,20 +42,20 @@ fun ArrayCanvas(
     Canvas(modifier = modifier.fillMaxSize()) {
         val width = size.width
         val height = size.height
-        val arrSize = max(step.array.size, 1)
+        val arrSize = max(arrayState.array.size, 1)
 
         val padding = 16.dp.toPx()
         val availableWidth = width - (padding * 2)
         val spacing = 8.dp.toPx()
         
         // Calculate max value for height scaling
-        val maxVal = max(step.array.maxOrNull() ?: 1, 1).toFloat()
+        val maxVal = max(arrayState.array.maxOrNull() ?: 1, 1).toFloat()
         val barWidth = (availableWidth - (spacing * (arrSize - 1))) / arrSize
 
         val maxBarHeight = height * 0.7f // Bars take up max 70% of canvas height
 
         for (i in 0 until arrSize) {
-            val value = step.array[i]
+            val value = arrayState.array[i]
             val barHeight = (value / maxVal) * maxBarHeight
 
             val xOffset = padding + (i * (barWidth + spacing))
@@ -59,9 +63,9 @@ fun ArrayCanvas(
 
             // Determine bar color
             val barColor = when {
-                i in step.sortedIndices -> MintAccent
-                step.swapped && i in step.comparingIndices -> OrangeAccent
-                i in step.comparingIndices -> InfoBlue
+                i in arrayState.sortedIndices -> MintAccent
+                arrayState.swapped && i in arrayState.comparingIndices -> OrangeAccent
+                i in arrayState.comparingIndices -> InfoBlue
                 else -> surfaceVariant
             }
 
@@ -77,8 +81,8 @@ fun ArrayCanvas(
             val textLayoutResult = textMeasurer.measure(
                 text = value.toString(),
                 style = TextStyle(
-                    color = onSurface,
-                    fontSize = 14.sp,
+                    color = if (barColor == surfaceVariant) onSurface else DeepNavy,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
             )

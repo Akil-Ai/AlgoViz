@@ -295,7 +295,7 @@ fun LoginScreen(
             // Google Sign In
             OutlinedButton(
                 onClick = {
-                    // TODO: Google OAuth via Supabase
+                    viewModel.signInWithGoogle()
                 },
                 modifier = Modifier
                     .fillMaxWidth()
